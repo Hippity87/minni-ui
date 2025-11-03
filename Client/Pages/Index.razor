@@ -1,0 +1,148 @@
+@page "/"
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+
+<h2>Minni-luokittelija</h2>
+
+<div style="margin:1rem 0;">
+  <label>Valitse kuva (JPEG/PNG/WebP): </label>
+  <InputFile OnChange="OnFileSelected" accept="image/*" />
+</div>
+
+<div style="margin:1rem 0;">
+  <label>...tai anna kuvan URL: </label>
+  <input @bind="imageUrl" style="min-width: 420px;" />
+  <button @onclick="ClassifyUrl" disabled="@isBusy">Luokittele URL</button>
+</div>
+
+@if (previewDataUrl is not null)
+{
+  <div style="margin:1rem 0;">
+    <img src="@previewDataUrl" style="max-width:480px; height:auto; border:1px solid #ccc;"/>
+  </div>
+}
+
+<div style="margin:1rem 0;">
+  <button @onclick="ClassifyFile" disabled="@(!hasFile || isBusy)">Luokittele valittu tiedosto</button>
+  <button @onclick="ClearAll" disabled="@isBusy">Tyhjennä</button>
+</div>
+
+@if (error is not null)
+{
+  <p style="color:#b00;">@error</p>
+}
+
+@if (result is not null)
+{
+  <hr />
+  <h3>Tulos</h3>
+  <p><b>Decision:</b> @result.decision (@(Percent(result.topProb))) — threshold @result.threshold</p>
+  <ul>
+    @foreach (var p in result.predictions)
+    {
+      <li>@p.tag: @(Percent(p.prob))</li>
+    }
+  </ul>
+}
+
+@code {
+  string? imageUrl;
+  IBrowserFile? file;
+  string? previewDataUrl;
+  bool hasFile => file is not null;
+  bool isBusy;
+  string? error;
+
+  PredictionResult? result;
+
+  record Prediction(string tag, double prob);
+  record PredictionResult(bool ok, double threshold, string decision, string topTag, double topProb, List<Prediction> predictions);
+
+  async Task OnFileSelected(InputFileChangeEventArgs e)
+  {
+    error = null; result = null;
+    file = e.File;
+
+    using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+    using var ms = new MemoryStream();
+    await stream.CopyToAsync(ms);
+    var base64 = Convert.ToBase64String(ms.ToArray());
+    var mime = file.ContentType ?? "image/jpeg";
+    previewDataUrl = $"data:{mime};base64,{base64}";
+  }
+
+  async Task ClassifyFile()
+  {
+    if (file is null) return;
+    try
+    {
+      isBusy = true; error = null; result = null;
+
+      using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+      using var content = new StreamContent(stream);
+      content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+      var resp = await Http.PostAsync("/api/classify-image", content);
+      var json = await resp.Content.ReadAsStringAsync();
+      if (!resp.IsSuccessStatusCode)
+      {
+        error = $"Virhe: {resp.StatusCode} {json}";
+        return;
+      }
+
+      result = System.Text.Json.JsonSerializer.Deserialize<PredictionResult>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+    catch (Exception ex)
+    {
+      error = ex.Message;
+    }
+    finally
+    {
+      isBusy = false;
+      StateHasChanged();
+    }
+  }
+
+  async Task ClassifyUrl()
+  {
+    if (string.IsNullOrWhiteSpace(imageUrl)) { error = "Anna kuvan URL"; return; }
+    try
+    {
+      isBusy = true; error = null; result = null;
+
+      var payload = new { imageUrl };
+      var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
+      var resp = await Http.PostAsync("/api/classify", content);
+      var json = await resp.Content.ReadAsStringAsync();
+      if (!resp.IsSuccessStatusCode)
+      {
+        error = $"Virhe: {resp.StatusCode} {json}";
+        return;
+      }
+      result = System.Text.Json.JsonSerializer.Deserialize<PredictionResult>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+      previewDataUrl = imageUrl;
+    }
+    catch (Exception ex)
+    {
+      error = ex.Message;
+    }
+    finally
+    {
+      isBusy = false;
+      StateHasChanged();
+    }
+  }
+
+  void ClearAll()
+  {
+    imageUrl = null;
+    file = null;
+    previewDataUrl = null;
+    result = null;
+    error = null;
+  }
+
+  static string Percent(double p) => $"{Math.Round(p * 100, 1)}%";
+}
+

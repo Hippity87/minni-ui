@@ -1,28 +1,29 @@
-// POST /api/classify
-// Body JSON: { "imageUrl": "https://..." }
+// POST /api/classify-image
+// Body: raw image bytes (Content-Type: application/octet-stream)
 module.exports = async function (context, req) {
   try {
-    const { imageUrl } = req.body || {};
-    if (!imageUrl || typeof imageUrl !== "string") {
-      context.res = { status: 400, headers: { "Content-Type": "application/json" }, body: { ok: false, error: 'Provide JSON body: { "imageUrl": "https://..." }' } };
-      return;
-    }
-
     const endpoint = process.env.PREDICTION_ENDPOINT;
     const projectId = process.env.PROJECT_ID;
     const published = process.env.PUBLISHED_NAME;
     const key = process.env.PREDICTION_KEY;
     const threshold = parseFloat(process.env.THRESHOLD || "0.8");
 
-    const url = `${endpoint}/customvision/v3.0/Prediction/${projectId}/classify/iterations/${published}/url`;
+    // Azure Functions JS (classic model) antaa raw-rungon Bufferina, kun Content-Type on application/octet-stream
+    const raw = req.body;
+    if (!(raw && raw.length)) {
+      context.res = { status: 400, headers: { "Content-Type": "application/json" }, body: { ok: false, error: "Send image bytes with Content-Type: application/octet-stream" } };
+      return;
+    }
+
+    const url = `${endpoint}/customvision/v3.0/Prediction/${projectId}/classify/iterations/${published}/image`;
 
     const predResp = await fetch(url, {
       method: "POST",
       headers: {
         "Prediction-Key": key,
-        "Content-Type": "application/json"
+        "Content-Type": "application/octet-stream"
       },
-      body: JSON.stringify({ Url: imageUrl })
+      body: raw
     });
 
     if (!predResp.ok) {
@@ -31,7 +32,7 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const data = await predResp.json();
+    const data = await predResp.json(); // { predictions: [ { probability, tagName } ... ] }
     const predictions = (data.predictions || [])
       .map(p => ({ tag: p.tagName, prob: p.probability }))
       .sort((a, b) => b.prob - a.prob);

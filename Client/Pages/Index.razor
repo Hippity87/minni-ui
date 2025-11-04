@@ -3,55 +3,64 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject HttpClient Http
 
-<h2>Minni-luokittelija</h2>
-<p style="max-width: 64ch; line-height:1.6;">
+<div class="page-wrap mx-auto">
+  <h2 class="mb-3">Minni-luokittelija</h2>
+
+  <p class="text-muted lead-sm">
     Tässä projektissa tunnistetaan Minni-koira Azure Custom Visionin avulla.
     Käyttöliittymä (Blazor WASM) lähettää kuvan Azure Functions -rajapintaan
     (<code>/api/classify</code> tai <code>/api/classify-image</code>), joka kutsuu
     Custom Visionin Prediction-palvelua ja soveltaa 0.80-thresholdin ennen tuloksen palautusta.
-</p>
+  </p>
 
+  @if (error is not null)
+  {
+    <div class="alert alert-danger" role="alert">@error</div>
+  }
 
-<div style="margin:1rem 0;">
-  <label>Valitse kuva (JPEG/PNG/WebP): </label>
-  <InputFile OnChange="OnFileSelected" accept="image/*" />
-</div>
-
-<div style="margin:1rem 0;">
-  <label>...tai anna kuvan URL: </label>
-  <input @bind="imageUrl" style="min-width: 420px;" />
-  <button @onclick="ClassifyUrl" disabled="@isBusy">Luokittele URL</button>
-</div>
-
-@if (previewDataUrl is not null)
-{
-  <div style="margin:1rem 0;">
-    <img src="@previewDataUrl" style="max-width:480px; height:auto; border:1px solid #ccc;"/>
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Valitse kuva (JPEG/PNG/WebP)</label>
+    <InputFile OnChange="OnFileSelected" accept="image/*" class="form-control" />
   </div>
-}
 
-<div style="margin:1rem 0;">
-  <button @onclick="ClassifyFile" disabled="@(!hasFile || isBusy)">Luokittele valittu tiedosto</button>
-  <button @onclick="ClearAll" disabled="@isBusy">Tyhjennä</button>
+  <div class="mb-3">
+    <label class="form-label fw-semibold">…tai anna kuvan URL</label>
+    <div class="input-group">
+      <input class="form-control text-break" @bind="imageUrl" placeholder="https://example.com/image.jpg" />
+      <button class="btn btn-primary" @onclick="ClassifyUrl" disabled="@isBusy">Luokittele URL</button>
+    </div>
+  </div>
+
+  @if (previewDataUrl is not null)
+  {
+    <div class="mb-3 text-center">
+      <img src="@previewDataUrl" class="img-fluid rounded shadow-sm preview-img" />
+    </div>
+  }
+
+  <div class="d-grid gap-2 d-sm-flex">
+    <button class="btn btn-success" @onclick="ClassifyFile" disabled="@(!hasFile || isBusy)">
+      Luokittele valittu tiedosto
+    </button>
+    <button class="btn btn-outline-secondary" @onclick="ClearAll" disabled="@isBusy">Tyhjennä</button>
+  </div>
+
+  @if (result is not null)
+  {
+    <hr class="my-4" />
+    <h5 class="mb-2">Tulos</h5>
+    <p class="mb-2">
+      <span class="badge bg-primary me-2">@result.decision</span>
+      <span class="text-muted">Top: @result.topTag (@Percent(result.topProb)), threshold @result.threshold</span>
+    </p>
+    <ul class="mb-0">
+      @foreach (var p in result.predictions)
+      {
+        <li>@p.tag: @Percent(p.prob)</li>
+      }
+    </ul>
+  }
 </div>
-
-@if (error is not null)
-{
-  <p style="color:#b00;">@error</p>
-}
-
-@if (result is not null)
-{
-  <hr />
-  <h3>Tulos</h3>
-  <p><b>Decision:</b> @result.decision (@(Percent(result.topProb))) — threshold @result.threshold</p>
-  <ul>
-    @foreach (var p in result.predictions)
-    {
-      <li>@p.tag: @(Percent(p.prob))</li>
-    }
-  </ul>
-}
 
 @code {
   string? imageUrl;

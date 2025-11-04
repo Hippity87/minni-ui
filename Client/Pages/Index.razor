@@ -4,6 +4,13 @@
 @inject HttpClient Http
 
 <h2>Minni-luokittelija</h2>
+<p style="max-width: 64ch; line-height:1.6;">
+    Tässä projektissa tunnistetaan Minni-koira Azure Custom Visionin avulla.
+    Käyttöliittymä (Blazor WASM) lähettää kuvan Azure Functions -rajapintaan
+    (<code>/api/classify</code> tai <code>/api/classify-image</code>), joka kutsuu
+    Custom Visionin Prediction-palvelua ja soveltaa 0.80-thresholdin ennen tuloksen palautusta.
+</p>
+
 
 <div style="margin:1rem 0;">
   <label>Valitse kuva (JPEG/PNG/WebP): </label>

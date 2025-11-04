@@ -4,7 +4,13 @@
 @inject HttpClient Http
 
 <div class="page-wrap mx-auto">
-  <h2 class="mb-3">Minni-luokittelija</h2>
+  <div class="hero-wrap text-center">
+  <img src="img/minni-luokittelija.png"
+       alt="Minni-luokittelija"
+       class="hero-img img-fluid"
+       onerror="this.style.display='none'; document.getElementById('title-fallback').style.display='block';" />
+  <h2 id="title-fallback" style="display:none;">Minni-luokittelija</h2>
+</div>
 
   <p class="text-muted lead-sm">
     Tässä projektissa tunnistetaan Minni-koira Azure Custom Visionin avulla.

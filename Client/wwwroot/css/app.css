@@ -112,3 +112,24 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* Keskitetty max-leveys: estää "täysleveän banderoloinnin" isoilla näytöillä */
+.page-wrap {
+  max-width: 900px;
+  padding: 1.25rem;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 6px 24px rgba(0,0,0,.06);
+}
+
+/* Esikatselukuva pysyy ruudussa myös puhelimella */
+.preview-img {
+  max-height: 380px;
+  object-fit: contain;
+}
+
+/* Pieni typografia-tiivistys mobiilissa */
+.lead-sm { line-height: 1.55; }
+@media (max-width: 576px) {
+  .page-wrap { padding: 1rem; border-radius: .75rem; }
+}

@@ -133,3 +133,49 @@ code {
 @media (max-width: 576px) {
   .page-wrap { padding: 1rem; border-radius: .75rem; }
 }
+
+/* --- Sidebar nav: paremman kontrastin, koon ja hoverin fixit --- */
+.sidebar .nav-link {
+  color: #fff !important;              /* valkoinen teksti myös ei-aktiivisena */
+  font-size: 1.06rem;                   /* hitusen isompi */
+  padding: .55rem .9rem;
+  border-radius: .75rem;
+  margin-bottom: .45rem;
+  background: transparent;
+  transition: color .2s ease, background-position .4s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+/* isompi fontti desktopilla */
+@media (min-width: 992px) {
+  .sidebar .nav-link { font-size: 1.12rem; }
+}
+
+/* hover-korostus + kevyt shimmer */
+.sidebar .nav-link:hover {
+  color: #fff;
+  background: linear-gradient(90deg, rgba(59,130,246,.18), rgba(99,102,241,.24), rgba(59,130,246,.18));
+  background-size: 200% 100%;
+  animation: sidebar-shimmer 1.2s linear infinite;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset;
+}
+
+/* active-tila selkeä */
+.sidebar .nav-link.active,
+.sidebar .nav-link.active:hover {
+  color: #fff !important;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  background-size: 100% 100%;
+  animation: none;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.08) inset;
+}
+
+/* shimmer-animaatio (hover) */
+@keyframes sidebar-shimmer {
+  0%   { background-position: 0% 0; }
+  100% { background-position: 100% 0; }
+}
+
+/* kun käyttäjä on rajoittanut animaatioita, ei shimmeriä */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar .nav-link:hover { animation: none; }
+}

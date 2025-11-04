@@ -1,20 +1,21 @@
-﻿<nav class="navbar navbar-dark bg-dark px-3">
+<nav class="navbar navbar-dark bg-dark px-3">
     <a class="navbar-brand" href="">Minni-luokittelija</a>
 </nav>
 
 <div class="sidebar">
     <nav class="flex-column nav-pills px-3 py-3">
-        <!-- Etusivu (Index @ "/") -->
+        @* Etusivu (Index at "/") *@
         <NavLink class="nav-link" href="">
             Home
         </NavLink>
 
-        <!-- Ulkoinen linkki uuteen välilehteen -->
+        @* Ulkoinen linkki uuteen välilehteen *@
         <a class="nav-link" href="https://projectlexagon.fi" target="_blank" rel="noopener noreferrer">
             ProjectLexagon.fi ↗
         </a>
     </nav>
 </div>
+
 
 @code {
     private bool collapseNavMenu = true;
